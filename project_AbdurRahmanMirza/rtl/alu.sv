@@ -25,7 +25,7 @@ module alu (
             4'b0100: result = a ^ b;                      // XOR
             4'b0101: result = a << b[4:0];                // SLL
             4'b0110: result = a >> b[4:0];                // SRL
-            4'b0111: result = a >>> b[4:0];               // SRA   
+            4'b0111: result = $signed(a) >>> b[4:0];      // SRA  
             4'b1000: result = ($signed(a) < $signed(b));  // SLT
             4'b1001: result = a < b;                      // SLTU 
             default: result = 32'h0000_0000;
