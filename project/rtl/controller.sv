@@ -26,7 +26,7 @@ module control (
     output logic [3:0] alu_control
 );
 
-    always_comb begin
+    always@(*) begin
             // Default values
             reg_write   = 1'b0;
             imm_src     = 3'b000;
@@ -43,17 +43,81 @@ module control (
                     case ({funct3, funct7[5]})
                         4'b0000: alu_control = 4'b0000; // ADD
                         // TODO: Implement other R-type operations
+                        4'b0001: alu_control = 4'b0001; // SUB
+                        4'b0010: alu_control = 4'b0101; // SLL
+                        4'b0100: alu_control = 4'b1000; // SLT
+                        4'b0110: alu_control = 4'b1001; // SLTU
+                        4'b1000: alu_control = 4'b0100; // XOR
+                        4'b1010: alu_control = 4'b0110; // SRL
+                        4'b1011: alu_control = 4'b0111; // SRA
+                        4'b1100: alu_control = 4'b0011; // OR
+                        4'b1110: alu_control = 4'b0010; // AND
+                        default: alu_control = 4'b0000;
 
                     endcase
             end
 
             // TODO: Implement remaining instruction types:
             // I-type (0010011)
+            7'b0010011: begin // I-type (ALU operations)
+                reg_write = 1'b1;
+                imm_src   = 3'b000; // I-type immediate encoding
+                alu_src   = 1'b1;   // Use immediate instead of register 2
+                case (funct3)
+                    3'b000: alu_control = 4'b0000; // ADDI
+                    3'b010: alu_control = 4'b1000; // SLTI
+                    3'b011: alu_control = 4'b1001; // SLTIU
+                    3'b100: alu_control = 4'b0100; // XORI
+                    3'b110: alu_control = 4'b0011; // ORI
+                    3'b111: alu_control = 4'b0010; // ANDI
+                    3'b001: alu_control = 4'b0101; // SLLI
+                    3'b101: begin 
+                        // Distinguish between SRLI and SRAI using funct7[5]
+                        if (funct7[5] == 1'b1) 
+                            alu_control = 4'b0111; // SRAI
+                        else 
+                            alu_control = 4'b0110; // SRLI
+                    end
+                    default: alu_control = 4'b0000;
+                endcase
+            end
             // Load (0000011)
+            7'b0000011: begin // Load
+                reg_write  = 1'b1;
+                imm_src    = 3'b000; // I-type immediate
+                alu_src    = 1'b1;   // Calculate address: rs1 + imm
+                mem_read   = 1'b1;
+                result_src = 1'b1;   // Route memory output to register writeback
+                mem_to_reg = 1'b1;
+                alu_control = 4'b0000; // ADD
+            end
             // Store (0100011)
+            7'b0100011: begin // Store
+                imm_src    = 3'b001; // S-type immediate encoding
+                alu_src    = 1'b1;   // Calculate address: rs1 + imm
+                mem_write  = 1'b1;
+                alu_control = 4'b0000; // ADD
+            end
             // Branch (1100011)
+            7'b1100011: begin // Branch
+                imm_src    = 3'b010; // B-type immediate encoding
+                branch     = 1'b1;
+                // alu_src defaults to 0 to compare rs1 and rs2
+                alu_control = 4'b0001; // SUB (often used to trigger zero/negative flags)
+            end
             // JAL (1101111)
+            7'b1101111: begin // JAL (Jump and Link)
+                reg_write  = 1'b1;
+                imm_src    = 3'b011; // J-type immediate encoding
+                jump       = 1'b1;
+            end
             // LUI (0110111)
+            7'b0110111: begin // LUI (Load Upper Immediate)
+                reg_write  = 1'b1;
+                imm_src    = 3'b100; // U-type immediate encoding
+                alu_src    = 1'b1;   // Route immediate to ALU
+                alu_control = 4'b0000; // Datapath typically zeroes rs1 and ADDs immediate
+            end
 
              default: begin
                 // NOP or unsupported instruction
