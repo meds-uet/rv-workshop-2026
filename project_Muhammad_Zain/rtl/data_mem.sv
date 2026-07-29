@@ -17,13 +17,20 @@ module dmem (
 
     logic [31:0] mem [0:1023]; // 4KB data memory
 
-     // TODO: Initialize memory to zero using a for loop
+    initial begin
+        for (int i = 0; i < 1024; i++) begin
+            mem[i] = 32'h0000_0000;
+        end
+    end
 
     // Read operation
     assign rdata = mem[addr[31:2]];
 
-     // TODO: Implement write operation on positive clock edge
-    // Hint: if (we) then write wdata to mem[addr[31:2]]
+    always @(posedge clk) begin
+        if (we) begin
+            mem[addr[31:2]] <= wdata;
+        end
+    end
 
 
 endmodule
