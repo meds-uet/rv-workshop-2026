@@ -18,12 +18,17 @@ module register_file (
 
     logic [31:0] registers [0:31];
 
-    // TODO: Initialize registers to zero using a for loop
-    // Read port 1 (example implemented)
+    initial begin
+        for(int i=0; i<32; i++) begin
+            registers[i] = 0;
+        end
+    end
+
     assign rd1 = (ra1 == 5'b00000) ? 32'h0000_0000 : registers[ra1];
+    assign rd2 = (ra2 == 5'b00000) ? 32'h0000_0000 : registers[ra2];
 
-    // TODO: Implement rd2 read port using same logic as rd1
-    // TODO: Implement write logic (on clk posedge)
-    // Only write if we == 1 and wa != x0
-
+    always_ff @(posedge clk) begin
+        if (we && (wa != 5'b00000))
+        registers[wa] <= wd;
+    end
 endmodule
