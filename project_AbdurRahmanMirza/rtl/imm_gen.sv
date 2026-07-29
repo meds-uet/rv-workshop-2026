@@ -6,9 +6,11 @@
 // =============================================================================
 // Single-Cycle RISC-V Processor - Immediate Generator (Workshop Skeleton Version)
 // =============================================================================
+
 module immgen (
     input  logic [31:0] instruction,
     input  logic [2:0]  imm_src,
+    
     output logic [31:0] imm_ext
 );
     always_comb begin
