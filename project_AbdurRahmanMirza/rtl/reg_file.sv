@@ -10,7 +10,7 @@
 module register_file (
     input  logic        clk,
     input  logic        we,
-    input logic reset,
+    input  logic        reset,
     input  logic [4:0]  ra1, ra2, wa,
     input  logic [31:0] wd,
     output logic [31:0] rd1, rd2
