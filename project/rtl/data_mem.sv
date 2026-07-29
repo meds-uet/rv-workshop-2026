@@ -18,6 +18,16 @@ module dmem (
     logic [31:0] mem [0:1023]; // 4KB data memory
 
      // TODO: Initialize memory to zero using a for loop
+     always_ff @(posedge clk or posedge reset) begin
+        if (reset) begin
+            for (integer i = 0; i < 1024; i= i+1) begin
+                mem[i] <= 32'b0;
+            end
+        end
+        else if (we) begin
+            mem[addr[31:2]] <= wdata;
+        end
+     end
 
     // Read operation
     assign rdata = mem[addr[31:2]];
@@ -25,5 +35,6 @@ module dmem (
      // TODO: Implement write operation on positive clock edge
     // Hint: if (we) then write wdata to mem[addr[31:2]]
 
+    //In same always_ff block as memory reset
 
 endmodule
