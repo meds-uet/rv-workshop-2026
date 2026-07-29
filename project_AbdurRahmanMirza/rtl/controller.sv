@@ -114,7 +114,7 @@ module control (
             // jump and link
             7'b1101111: begin
                 reg_write = 1'b1;
-                imm_src   = 3'b011;
+                imm_src   = 3'b100;
                 jump      = 1'b1;
             end
 
@@ -122,7 +122,7 @@ module control (
             7'b0110111: begin
                 reg_write   = 1'b1;
                 alu_src     = 1'b1;
-                imm_src     = 3'b100;
+                imm_src     = 3'b011;
                 alu_control = 4'b0000;
             end
 
