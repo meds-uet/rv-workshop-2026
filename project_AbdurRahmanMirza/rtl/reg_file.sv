@@ -16,27 +16,22 @@ module register_file (
     output logic [31:0] rd1, rd2
 );
 
-    logic [31:0] registers [0:31];
+    logic [31:0] registers [0:31];           // 32 general-purpose registers
     integer i;
-    
-    initial begin
-        for (i = 0; i < 32; i++)
-            registers[i] <= 32'b0; 
-    end
-    
-    // read port 1
+
+    // Read port 1 (x0 is always zero)
     assign rd1 = (ra1 == 5'b00000) ? 32'h0000_0000 : registers[ra1];
-    // read port 2
+
+    // Read port 2 (x0 is always zero)
     assign rd2 = (ra2 == 5'b00000) ? 32'h0000_0000 : registers[ra2];
 
-
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk) begin          // register write and reset
         if (reset) begin
             for (i = 0; i < 32; i++)
-                registers[i] <= 32'b0;
+                registers[i] <= 32'b0;      // clear all registers
         end
         else if (we && wa != 5'b00000) begin
-            registers[wa] <= wd;
+            registers[wa] <= wd;            // write data into destination register
         end
     end
 
