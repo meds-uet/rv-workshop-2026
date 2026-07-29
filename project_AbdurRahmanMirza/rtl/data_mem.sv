@@ -6,33 +6,28 @@
 // =============================================================================
 // Single-Cycle RISC-V Processor - Data Memory (Workshop Skeleton Version)
 // =============================================================================
+
 module dmem (
     input  logic        clk,
     input  logic        we,
     input  logic        reset,
     input  logic [31:0] addr,
     input  logic [31:0] wdata,
+    
     output logic [31:0] rdata
 );
 
-    logic [31:0] mem [0:1023]; // 4KB data memory
-    integer i;
+    logic [31:0] mem [0:1023];              // 4 KB data memory
 
-    initial begin
-        for (i = 0; i < 1024; i++)
-            mem[i] <= 32'b0;
-    end
-    
-    // read operation
-    assign rdata = mem[addr[31:2]];
+    assign rdata = mem[addr[31:2]];         // asynchronous read
 
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk) begin          // synchronous write and reset
         if (reset) begin
-            for (i = 0; i < 1024; i++)
-                mem[i] <= 32'b0;
-        end 
+            for (int i = 0; i < 1024; i++)
+                mem[i] <= 32'b0;            // clear all memory locations
+        end
         else if (we)
-            mem[addr[31:2]] <= wdata;  
+            mem[addr[31:2]] <= wdata;       // write data to memory
     end
 
 endmodule
