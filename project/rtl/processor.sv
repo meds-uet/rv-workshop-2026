@@ -31,13 +31,18 @@ module riscv_processor (
     logic alu_src;
     logic mem_write;
     logic branch;
+    logic result_src;
+    logic mem_read;
+    logic mem_to_reg;
+    logic jump;
 
     logic [2:0]  imm_src;
-    logic [2:0]  alu_control;
-    logic [1:0]  result_src;
+    logic [3:0]  alu_control;
 
     // PC logic
     assign pc_next = pc_src ? (pc + imm_ext) : (pc + 32'd4);
+
+    assign result = result_src ? read_data : alu_result;
 
     // Debug outputs
     assign pc_out = pc;
@@ -97,14 +102,16 @@ module riscv_processor (
         .opcode(instruction[6:0]),
         .funct3(instruction[14:12]),
         .funct7(instruction[31:25]),
-        .zero(zero),
         .reg_write(reg_write),
+        .imm_src(imm_src),
         .alu_src(alu_src),
         .mem_write(mem_write),
         .result_src(result_src),
-        .imm_src(imm_src),
-        .alu_control(alu_control),
-        .pc_src(pc_src)
+        .branch(branch),
+        .mem_read(mem_read),
+        .mem_to_reg(mem_to_reg),
+        .jump(jump),
+        .alu_control(alu_control)
     );
 
     branch_unit branch_unit_inst (

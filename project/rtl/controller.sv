@@ -112,6 +112,7 @@ module control (
 
                 default: begin
                     // NOP or unsupported instruction
+                end
             endcase
     end
 endmodule
