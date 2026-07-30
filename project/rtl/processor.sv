@@ -21,10 +21,12 @@ module riscv_processor (
     // TODO: Declare additional internal signals like:
     // rd1, rd2, imm_ext, src_a, src_b, alu_result, read_data, result
     // zero, pc_src, reg_write, alu_src, mem_write, etc.
-    logic [31:0] rd1, rd2, imm_ext, src_a, src_b, alu_result, read_data, result, wa;
-    logic zero, pc_src, reg_write, alu_src, mem_write, mem_to_reg, branch, regDst;
-    logic [2:0] imm_src;        
-    
+    logic [31:0] rd1, rd2, imm_ext, src_a, src_b, alu_result, read_data, result;
+    logic        pc_src, reg_write, alu_src, mem_write, mem_read, jump,branch,result_src;
+    logic [1:0] mem_to_reg;
+    logic [2:0]  imm_src;
+    logic [3:0]  alu_op;
+    logic [31:0] pc_in;
 
     // PC logic
     assign pc_next = pc + 4; // TODO: Replace with branch/jump-aware logic
@@ -36,10 +38,17 @@ module riscv_processor (
 
     // Module instantiations
 
+    mux pc_mux (
+        .a(pc_next), // Next sequential PC
+        .b(alu_result), // Branch target address
+        .sel(pc_src), // TODO: Connect to branch control signal
+        .y(pc_in) // Final PC value
+    );
+
     pc pc_reg (
         .clk(clk),
         .reset(reset),
-        .pc_next(pc_next),
+        .pc_next(pc_in),
         .pc(pc)
     );
 
@@ -64,20 +73,20 @@ module riscv_processor (
         .reset(reset),
         .ra1(instruction[19:15]), // rs1
         .ra2(instruction[24:20]), // rs2
-        .wa(wa),   // rd
+        .wa(instruction[11:7]),   // rd
         .wd(result),               // TODO: Connect to write data (from ALU or memory)
         .rd1(rd1),
         .rd2(rd2)
     );
 
-    mux write_adress_mux (
-        .a(instruction[24:20]), // rd
-        .b(instruction[15:11]),   
-        .sel(regDst),             // TODO: Connect to control signal for jal
-        .y(wa)                 // Write address to register file
+    mux alu_mux_a (
+        .a(pc), // rd
+        .b(rd1), 
+        .sel(jump),             // TODO: Connect to control signal for jal
+        .y(src_a)                 // Write address to register file
     );
 
-    mux alu_src_mux (
+    mux alu_mux_b (
         .a(rd2), // Register data
         .b(imm_ext), // Immediate value
         .sel(alu_src), // TODO: Connect to control signal
@@ -90,20 +99,23 @@ module riscv_processor (
         .imm_ext(imm_ext)
     );
 
-    mux pc_src_mux (
-        .a(pc_next), // Next sequential PC
-        .b(alu_result), // Branch target address
-        .sel(pc_src), // TODO: Connect to branch control signal
-        .y(pc_next) // Final PC value
-    );
 
     alu alu_unit (
-        .src_a(src_a), // TODO: Connect to rd1 or PC
-        .src_b(src_b), // TODO: Connect to rd2 or imm_ext
-        .alu_control(alu_control), // TODO: Connect to control signal
-        .alu_result(alu_result),
+        .a(src_a), // TODO: Connect to rd1 or PC
+        .b(src_b), // TODO: Connect to rd2 or imm_ext
+        .alu_control(alu_op), // TODO: Connect to control signal
+        .result(alu_result),
         .zero(zero)
     );
+
+    branch_unit branch_unit (
+        .rd1(rd1), // TODO: Connect to rd1
+        .rd2(rd2), // TODO: Connect to rd2
+        .funct3(instruction[14:12]), // TODO: Connect to instruction funct3
+        .branch(branch), // TODO: Connect to control signal
+        .pc_src(pc_src)
+    );
+
 
     dmem data_memory (
         .clk(clk),
@@ -114,30 +126,29 @@ module riscv_processor (
         .rdata(read_data)
     );
 
-    mux mem_to_reg_mux (
-        .a(alu_result), // ALU result
-        .b(read_data),  // Data from memory
-        .sel(mem_to_reg), // TODO: Connect to control signal
-        .y(result) // Final result to write back to register file
-    );
-
-    branch_unit branch_unit (
-        .zero(zero),
-        .branch(branch), // TODO: Connect to control signal
-        .pc_src(pc_src)  // TODO: Connect to PC source selection logic
-    );
-
+    always_comb begin
+        case (mem_to_reg)
+            2'b00: result = pc_next; 
+            2'b01: result = alu_result; 
+            2'b10: result = read_data; 
+            default: result = 32'h0000_0000;
+        endcase
+    end
 
     control control_unit (
         .opcode(instruction[6:0]),
         .funct3(instruction[14:12]),
         .funct7(instruction[31:25]),
         .reg_write(reg_write),
+        .imm_src(imm_src),
         .alu_src(alu_src),
         .mem_write(mem_write),
-        .mem_to_reg(mem_to_reg),
+        .result_src(result_src),
         .branch(branch),
-        .alu_control(alu_control)
+        .mem_read(mem_read),
+        .mem_to_reg(mem_to_reg),
+        .jump(jump),
+        .alu_control(alu_op)
     );
 
 endmodule
