@@ -16,7 +16,13 @@ module imem (
         mem[0] = 32'h00500093; // addi x1, x0, 5
         // TODO: Add more test instructions (e.g., addi, add, sub, etc.)
         // TODO: Fill the remaining memory with NOPs (32'h00000013) using a for loop
-
+        mem[1] = 32'h00600113; // addi x2, x0, 6
+        mem[2] = 32'h002081B3; // add x3, x1, x2
+        mem[3] = 32'h00310133; // add x2, x2, x3
+        mem[4] = 32'h004181B3; // add x3, x3, x4
+        for (int i = 5; i < 1024; i++) begin
+            mem[i] = 32'h00000013; // NOP
+        end
 
         end
     // Word-aligned access

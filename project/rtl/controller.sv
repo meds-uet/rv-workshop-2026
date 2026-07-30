@@ -43,11 +43,77 @@ module control (
                     case ({funct3, funct7[5]})
                         4'b0000: alu_control = 4'b0000; // ADD
                         // TODO: Implement other R-type operations
-
+                        4'b0001: alu_control = 4'b0001; // SUB
+                        4'b1000: alu_control = 4'b0100; // XOR
+                        4'b1100: alu_control = 4'b0011; // OR
+                        4'b1110: alu_control = 4'b0010; // AND
+                        4'b0010: alu_control = 4'b0101; // SLL
+                        4'b1010: alu_control = 4'b0110; // SRL
+                        4'b1011: alu_control = 4'b0111; // SRA
+                        4'b0100: alu_control = 4'b1000; // SLT
+                        4'b0110: alu_control = 4'b1001; // SLTU
                     endcase
-            end
-
+                end
             // TODO: Implement remaining instruction types:
+                7'b0010011: begin // I-type (ADDI, SLTI, SLTIU, XORI, ORI, ANDI, SLLI, SRLI, SRAI)
+                    reg_write = 1'b1;
+                    imm_src = 3'b000; // I-type immediate
+                    alu_src = 1'b1;   // ALU source is immediate
+                    case (funct3)
+                        3'b000: alu_control = 4'b0000; // ADDI
+                        3'b010: alu_control = 4'b1000; // SLTI
+                        3'b011: alu_control = 4'b1001; // SLTIU
+                        3'b100: alu_control = 4'b0100; // XORI
+                        3'b110: alu_control = 4'b0011; // ORI
+                        3'b111: alu_control = 4'b0010; // ANDI
+                        3'b001: alu_control = 4'b0101; // SLLI
+                        3'b101: begin
+                            if (funct7[5] == 1'b0) begin
+                                alu_control = 4'b0110; // SRLI
+                            end else begin
+                                alu_control = 4'b0111; // SRAI
+                            end
+                        end
+                    endcase
+                end
+
+                7'b00000011: begin // Load (LB, LH, LW, LBU, LHU)
+                    reg_write = 1'b1;
+                    mem_read = 1'b1;
+                    mem_to_reg = 1'b1;
+                    imm_src = 3'b000;
+                    alu_src = 1'b1;
+                    result_src = 1'b1; // Result comes from memory
+                    alu_control = 4'b0000; // ADD for address calculation
+                end
+
+                7'b0100011: begin // Store (SB, SH, SW)
+                    mem_write = 1'b1;
+                    imm_src = 3'b001; // S-type immediate
+                    alu_src = 1'b1;   // ALU source is immediate
+                    alu_control = 4'b0000; // ADD for address calculation
+                end
+
+                7'b1100011: begin // Branch (BEQ, BNE, BLT, BGE, BLTU, BGEU)
+                    branch = 1'b1;
+                    imm_src = 3'b010; // B-type immediate
+                    alu_src = 1'b0;   // ALU source is register
+                    alu_control = 4'b0001; // SUB for comparison
+                end
+
+                7'b1101111: begin // JAL
+                    jump = 1'b1;
+                    reg_write = 1'b1;
+                    imm_src = 3'b011; // J-type immediate
+                    result_src = 1'b0; // Result comes from ALU (PC + 4)
+                end
+
+                7'b0110111: begin // LUI
+                    reg_write = 1'b1;
+                    imm_src = 3'b100; // U-type immediate
+                    alu_src = 1'b1;   // ALU source is immediate
+                    alu_control = 4'b0000; // ADD for loading immediate
+                end
             // I-type (0010011)
             // Load (0000011)
             // Store (0100011)
